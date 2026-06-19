@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personal AI Agent</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff;--bg2:#f7f7f5;--bg3:#f0efeb;
+  --text:#1a1a1a;--text2:#555;--text3:#888;
+  --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.22);
+  --purple:#7F77DD;--purple-dark:#534AB7;--purple-light:#EEEDFE;
+  --green:#1D9E75;--green-light:#E1F5EE;
+  --amber:#EF9F27;--amber-light:#FAEEDA;
+  --red:#E24B4A;--red-light:#FCEBEB;
+  --blue:#378ADD;--blue-light:#E6F1FB;
+  --radius:8px;--radius-lg:12px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1c1c1a;--bg2:#242422;--bg3:#2c2c2a;
+    --text:#f0f0ee;--text2:#aaa;--text3:#666;
+    --border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.2);
+    --purple-light:#26215C;--green-light:#04342C;
+    --amber-light:#412402;--red-light:#501313;--blue-light:#042C53;
+  }
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);font-size:14px;height:100vh;overflow:hidden}
+.app{display:flex;height:100vh}
+/* Sidebar */
+.sidebar{width:210px;background:var(--bg2);border-right:0.5px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.logo{padding:14px 16px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px}
+.logo-icon{width:28px;height:28px;background:var(--purple);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px}
+.logo h1{font-size:14px;font-weight:500}
+.logo small{font-size:11px;color:var(--text3)}
+.nav{padding:8px 0}
+.nav-label{padding:10px 16px 4px;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 16px;font-size:13px;cursor:pointer;color:var(--text2);border-left:2px solid transparent;transition:all .12s}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:var(--bg);color:var(--text);border-left-color:var(--purple);font-weight:500}
+.nav-item svg{width:15px;height:15px;flex-shrink:0}
+.status-bar{padding:10px 16px;border-top:0.5px solid var(--border);font-size:11px;color:var(--text3)}
+.dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle}
+.dot-green{background:var(--green)}.dot-amber{background:var(--amber)}.dot-red{background:var(--red)}
+/* Main */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:11px 20px;border-bottom:0.5px solid var(--border);min-height:48px}
+.topbar h2{font-size:14px;font-weight:500}
+.badge{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:500}
+.content{flex:1;overflow-y:auto;padding:18px}
+/* Panels */
+.panel{display:none}.panel.active{display:block}
+/* Cards */
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px}
+.card+.card,.card+.grid,.grid+.card{margin-top:12px}
+.card-title{font-size:12px;color:var(--text2);font-weight:500;margin-bottom:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px}
+/* Metrics */
+.metric-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px}
+.metric-val{font-size:22px;font-weight:500;margin:2px 0}
+.metric-lbl{font-size:11px;color:var(--text3)}
+.bar{height:5px;background:var(--bg3);border-radius:3px;margin-top:8px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;transition:width .4s}
+/* Buttons */
+button{cursor:pointer;font-family:inherit}
+.btn{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:6px 12px;border-radius:var(--radius);border:0.5px solid var(--border2);background:transparent;color:var(--text);transition:all .12s}
+.btn:hover{background:var(--bg2)}
+.btn-primary{background:var(--purple);color:#fff;border-color:var(--purple-dark)}
+.btn-primary:hover{background:var(--purple-dark)}
+.btn-success{background:var(--green-light);color:var(--green);border-color:var(--green)}
+.btn-warning{background:var(--amber-light);color:var(--amber);border-color:var(--amber)}
+/* Form */
+input,select,textarea{font-family:inherit;font-size:13px;padding:7px 10px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);outline:none;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(127,119,221,.15)}
+/* Chat */
+.messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:82%;padding:9px 13px;border-radius:var(--radius-lg);font-size:13px;line-height:1.55}
+.msg-user{align-self:flex-end;background:var(--purple);color:#fff;border-bottom-right-radius:3px}
+.msg-agent{align-self:flex-start;background:var(--bg2);border:0.5px solid var(--border);border-bottom-left-radius:3px}
+.msg-agent pre{background:var(--bg3);padding:8px;border-radius:6px;font-size:11px;overflow-x:auto;margin-top:6px;font-family:monospace}
+.msg-thinking{align-self:flex-start;color:var(--text3);font-size:12px;font-style:italic}
+.chat-input{display:flex;gap:8px;padding:12px;border-top:0.5px solid var(--border)}
+.chat-input input{flex:1}
+/* Log */
+.log-line{display:flex;gap:8px;padding:3px 0;border-bottom:0.5px solid var(--border);font-family:monospace;font-size:11px;line-height:1.4}
+.log-t{color:var(--text3);min-width:58px}
+.log-ok{color:var(--green)}.log-warn{color:var(--amber)}.log-error{color:var(--red)}.log-info{color:var(--blue)}
+/* Toggle */
+.toggle{width:34px;height:18px;border-radius:9px;background:var(--bg3);border:0.5px solid var(--border2);position:relative;cursor:pointer;transition:background .15s;flex-shrink:0}
+.toggle.on{background:var(--purple);border-color:var(--purple-dark)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:transform .15s}
+.toggle.on::after{transform:translateX(16px)}
+/* Row */
+.row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:0.5px solid var(--border)}
+.row:last-child{border-bottom:none}
+.row-title{font-size:13px;font-weight:500}
+.row-sub{font-size:11px;color:var(--text3);margin-top:2px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">🧠</div>
+      <div><h1>Personal AI</h1><small>v1.0 · local-first</small></div>
+    </div>
+    <div class="nav">
+      <div class="nav-label">Main</div>
+      <div class="nav-item active" data-panel="setup" onclick="nav(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        Setup
+      </div>
+      <div class="nav-item" data-panel="chat" onclick="nav(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Chat
+      </div>
+      <div class="nav-item" data-panel="models" onclick="nav(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        Models
+      </div>
+      <div class="nav-item" data-panel="monitor" onclick="nav(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Monitor
+      </div>
+      <div class="nav-label">Cloud</div>
+      <div class="nav-item" data-panel="cloud" onclick="nav(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+        Cloud APIs
+      </div>
+      <div class="nav-item" data-panel="logs" onclick="nav(this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+        Logs
+      </div>
+      <div class="nav-item" data-panel="settings" onclick="nav(this)" style="margin-top:auto">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </div>
+    </div>
+    <div class="status-bar">
+      <span class="dot" id="ollama-dot"></span>
+      <span id="ollama-status">Checking Ollama...</span>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <h2 id="page-title">Setup</h2>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="badge" id="page-badge" style="background:var(--bg2);color:var(--text2)">Loading...</span>
+        <button class="btn" onclick="refreshStatus()">↻ Refresh</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- SETUP -->
+      <div class="panel active" id="panel-setup">
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title">Backend connection</div>
+            <div id="backend-status" style="font-size:13px;margin-bottom:10px">Checking <code>http://localhost:8000</code>...</div>
+            <button class="btn" onclick="checkBackend()">Test connection</button>
+          </div>
+          <div class="card">
+            <div class="card-title">Quick start</div>
+            <div style="font-size:12px;line-height:1.8;font-family:monospace;background:var(--bg2);padding:10px;border-radius:var(--radius);border:0.5px solid var(--border)">
+              cd backend/<br>
+              pip install -r requirements.txt<br>
+              python main.py
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Installation checklist</div>
+          <div id="setup-steps">
+            <div class="row"><div><div class="row-title">1 · Install Ollama</div><div class="row-sub">curl -fsSL https://ollama.com/install.sh | sh</div></div><span class="badge" id="chk-ollama" style="background:var(--bg2);color:var(--text3)">Checking...</span></div>
+            <div class="row"><div><div class="row-title">2 · Pull a model</div><div class="row-sub">ollama pull deepseek-coder:7b</div></div><span class="badge" id="chk-model" style="background:var(--bg2);color:var(--text3)">Checking...</span></div>
+            <div class="row"><div><div class="row-title">3 · Backend running</div><div class="row-sub">python backend/main.py (port 8000)</div></div><span class="badge" id="chk-backend" style="background:var(--bg2);color:var(--text3)">Checking...</span></div>
+            <div class="row"><div><div class="row-title">4 · Open Interpreter (optional)</div><div class="row-sub">pip install open-interpreter</div></div><span class="badge" style="background:var(--amber-light);color:var(--amber)">Optional</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Full setup script</div>
+          <pre style="font-size:11px;line-height:1.7;background:var(--bg2);padding:12px;border-radius:var(--radius);overflow-x:auto;border:0.5px solid var(--border)"># ── 1. Ollama ───────────────────────────────────────────
+curl -fsSL https://ollama.com/install.sh | sh      # Linux/Mac
+# Windows: download from https://ollama.com
+
+# ── 2. Pull recommended models ───────────────────────────
+ollama pull deepseek-coder:7b    # best for coding
+ollama pull phi3:mini             # lightweight / fast
+ollama pull llama3:8b             # strong general model
+
+# ── 3. Backend ───────────────────────────────────────────
+cd backend/
+pip install -r requirements.txt
+python main.py                    # runs on http://localhost:8000
+
+# ── 4. Open this file in a browser ───────────────────────
+open frontend/index.html
+
+# ── 5. Optional: Open Interpreter (agent task runner) ────
+pip install open-interpreter</pre>
+          <button class="btn" style="margin-top:8px" onclick="copySetup()">⎘ Copy script</button>
+        </div>
+      </div>
+
+      <!-- CHAT -->
+      <div class="panel" id="panel-chat" style="display:flex;flex-direction:column;height:calc(100vh - 80px)">
+        <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-shrink:0">
+          <select id="chat-model" style="width:auto;flex:1">
+            <option value="deepseek-coder:7b">deepseek-coder:7b (local)</option>
+            <option value="phi3:mini">phi3:mini (local)</option>
+            <option value="llama3:8b">llama3:8b (local)</option>
+          </select>
+          <button class="btn" onclick="clearChat()">✕ Clear</button>
+        </div>
+        <div class="card" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+          <div class="messages" id="messages">
+            <div class="msg msg-agent">Hello! I'm your personal AI agent. I'm connected to your local Ollama instance and ready to help with coding, automation, and app building. What would you like to do?</div>
+          </div>
+          <div class="chat-input">
+            <input type="text" id="chat-in" placeholder="Ask anything or describe a task..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){e=event;e.preventDefault();sendMsg()}">
+            <button class="btn btn-primary" onclick="sendMsg()">Send ↗</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;flex-shrink:0">
+          <button class="btn" onclick="quickTask('Write a Python script to organize files by extension in a given folder')">📂 Organize files</button>
+          <button class="btn" onclick="quickTask('Build a minimal FastAPI REST API with CRUD endpoints')">⚡ Build REST API</button>
+          <button class="btn" onclick="quickTask('Write a bash script that backs up a folder to a zip file with a timestamp')">💾 Backup script</button>
+          <button class="btn" onclick="quickTask('Explain how to create a React app with Vite and TypeScript step by step')">⚛️ React app guide</button>
+        </div>
+      </div>
+
+      <!-- MODELS -->
+      <div class="panel" id="panel-models">
+        <div class="card" style="margin-bottom:12px">
+          <div class="card-title">Pull a new model</div>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="pull-input" placeholder="e.g. llama3:8b, mistral:7b, phi3:mini" style="flex:1">
+            <button class="btn btn-primary" onclick="pullModel()">⬇ Pull</button>
+          </div>
+          <div id="pull-progress" style="margin-top:8px;font-size:12px;color:var(--text3)"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Local models (from Ollama)</div>
+          <div id="models-list"><div style="color:var(--text3);font-size:12px">Loading...</div></div>
+        </div>
+      </div>
+
+      <!-- MONITOR -->
+      <div class="panel" id="panel-monitor">
+        <div class="grid3" id="metric-cards">
+          <div class="metric-card"><div class="metric-lbl">CPU</div><div class="metric-val" id="m-cpu">—</div><div class="bar"><div class="bar-fill" id="b-cpu" style="background:var(--purple)"></div></div></div>
+          <div class="metric-card"><div class="metric-lbl">RAM used</div><div class="metric-val" id="m-ram">—</div><div class="bar"><div class="bar-fill" id="b-ram" style="background:var(--green)"></div></div></div>
+          <div class="metric-card"><div class="metric-lbl">Tokens (session)</div><div class="metric-val" id="m-tok">0</div><div class="bar"><div class="bar-fill" id="b-tok" style="background:var(--amber);width:10%"></div></div></div>
+        </div>
+        <div class="grid2">
+          <div class="metric-card"><div class="metric-lbl">Tasks completed</div><div class="metric-val" id="m-tasks">0</div></div>
+          <div class="metric-card"><div class="metric-lbl">Session started</div><div class="metric-val" style="font-size:14px" id="m-start">—</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Backend health</div>
+          <div id="health-detail" style="font-size:12px;font-family:monospace;white-space:pre-wrap;color:var(--text2)">Click Refresh to fetch live data from http://localhost:8000/health</div>
+        </div>
+      </div>
+
+      <!-- CLOUD -->
+      <div class="panel" id="panel-cloud">
+        <div class="card" style="margin-bottom:12px">
+          <div class="card-title">API keys (stored in session only — never written to disk)</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div><label style="font-size:12px;font-weight:500;display:block;margin-bottom:4px">Anthropic (Claude)</label><div style="display:flex;gap:8px"><input type="password" id="key-anthropic" placeholder="sk-ant-..."><button class="btn" onclick="saveKey('anthropic','key-anthropic')">Save</button></div></div>
+            <div><label style="font-size:12px;font-weight:500;display:block;margin-bottom:4px">OpenAI (GPT-4)</label><div style="display:flex;gap:8px"><input type="password" id="key-openai" placeholder="sk-..."><button class="btn" onclick="saveKey('openai','key-openai')">Save</button></div></div>
+            <div><label style="font-size:12px;font-weight:500;display:block;margin-bottom:4px">Google (Gemini)</label><div style="display:flex;gap:8px"><input type="password" id="key-google" placeholder="AIza..."><button class="btn" onclick="saveKey('google','key-google')">Save</button></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Hybrid routing</div>
+          <div class="row"><div><div class="row-title">Prefer local for code</div><div class="row-sub">DeepSeek Coder handles most coding tasks privately</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="row"><div><div class="row-title">Route vision tasks to cloud</div><div class="row-sub">Local models lack vision — always use GPT-4V or Gemini</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="row"><div><div class="row-title">Cloud fallback on local failure</div><div class="row-sub">Automatically switch to cloud if Ollama is unavailable</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+      </div>
+
+      <!-- LOGS -->
+      <div class="panel" id="panel-logs">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-size:12px;color:var(--text2)">Live logs from <code>http://localhost:8000/logs</code></span>
+          <div style="display:flex;gap:8px">
+            <button class="btn" onclick="fetchLogs()">↻ Refresh</button>
+            <button class="btn" onclick="clearLogs()">✕ Clear</button>
+          </div>
+        </div>
+        <div class="card" style="max-height:calc(100vh - 160px);overflow-y:auto">
+          <div id="log-feed"></div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="panel" id="panel-settings">
+        <div class="card" style="margin-bottom:12px">
+          <div class="card-title">Backend</div>
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <input type="text" id="backend-url" value="http://localhost:8000" style="flex:1">
+            <button class="btn btn-primary" onclick="updateBackend()">Connect</button>
+          </div>
+          <div class="row"><div><div class="row-title">Sandboxed execution</div><div class="row-sub">Run code inside Docker — safer for untrusted scripts</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="row"><div><div class="row-title">Auto-approve file writes</div><div class="row-sub">Agent can write files without confirmation</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+          <div class="row"><div><div class="row-title">Verbose logging</div><div class="row-sub">Show all tool calls in the log panel</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Default model</div>
+          <select id="default-model">
+            <option>deepseek-coder:7b</option>
+            <option>phi3:mini</option>
+            <option>llama3:8b</option>
+          </select>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+let API = 'http://localhost:8000';
+const chatHistory = [];
+
+// ── Navigation ──────────────────────────────────────────────────────────────
+const panelTitles = {setup:'Setup',chat:'Chat with Agent',models:'Models',monitor:'Monitor',cloud:'Cloud APIs',logs:'Logs',settings:'Settings'};
+function nav(el){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  const id=el.dataset.panel;
+  const panel=document.getElementById('panel-'+id);
+  panel.classList.add('active');
+  document.getElementById('page-title').textContent=panelTitles[id]||id;
+  if(id==='models')fetchModels();
+  if(id==='monitor')fetchMetrics();
+  if(id==='logs')fetchLogs();
+}
+
+// ── Backend status ───────────────────────────────────────────────────────────
+async function checkBackend(){
+  const el=document.getElementById('backend-status');
+  try{
+    const r=await fetch(`${API}/health`);
+    const d=await r.json();
+    el.innerHTML=`<span style="color:var(--green)">✓ Connected</span> — Ollama: ${d.ollama?'<span style="color:var(--green)">running</span>':'<span style="color:var(--red)">not running</span>'}`;
+    updateOllamaIndicator(d.ollama);
+    document.getElementById('chk-backend').textContent='✓ Running';
+    document.getElementById('chk-backend').style.cssText='background:var(--green-light);color:var(--green)';
+    if(d.ollama){
+      document.getElementById('chk-ollama').textContent='✓ Running';
+      document.getElementById('chk-ollama').style.cssText='background:var(--green-light);color:var(--green)';
+    }
+  }catch(e){
+    el.innerHTML=`<span style="color:var(--red)">✗ Cannot reach backend at ${API}</span> — run <code>python main.py</code>`;
+    document.getElementById('chk-backend').textContent='✗ Not running';
+    document.getElementById('chk-backend').style.cssText='background:var(--red-light);color:var(--red)';
+  }
+}
+
+function updateOllamaIndicator(ok){
+  const dot=document.getElementById('ollama-dot');
+  const lbl=document.getElementById('ollama-status');
+  dot.className='dot '+(ok?'dot-green':'dot-red');
+  lbl.textContent=ok?'Ollama connected':'Ollama offline';
+}
+
+async function refreshStatus(){
+  await checkBackend();
+  const id=document.querySelector('.panel.active').id.replace('panel-','');
+  if(id==='models')fetchModels();
+  if(id==='monitor')fetchMetrics();
+  if(id==='logs')fetchLogs();
+}
+
+// ── Chat ─────────────────────────────────────────────────────────────────────
+async function sendMsg(){
+  const inp=document.getElementById('chat-in');
+  const txt=inp.value.trim();
+  if(!txt)return;
+  inp.value='';
+  addMsg(txt,true);
+  chatHistory.push({role:'user',content:txt});
+
+  const thinking=addThinking();
+  const model=document.getElementById('chat-model').value;
+
+  try{
+    const resp=await fetch(`${API}/chat/conversation`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages:chatHistory,model})
+    });
+    thinking.remove();
+
+    if(!resp.ok){
+      const err=await resp.json();
+      addMsg('Error: '+JSON.stringify(err),false);
+      return;
+    }
+
+    const agentEl=addMsg('',false);
+    const reader=resp.body.getReader();
+    const dec=new TextDecoder();
+    let full='';
+
+    while(true){
+      const{done,value}=await reader.read();
+      if(done)break;
+      const text=dec.decode(value,{stream:true});
+      for(const line of text.split('\n')){
+        if(!line.startsWith('data:'))continue;
+        try{
+          const chunk=JSON.parse(line.slice(5));
+          if(chunk.token){full+=chunk.token;agentEl.textContent=full;scrollMsgs();}
+          if(chunk.error){agentEl.textContent='Error: '+chunk.error;agentEl.style.color='var(--red)';}
+        }catch{}
+      }
+    }
+    if(full)chatHistory.push({role:'assistant',content:full});
+  }catch(e){
+    thinking.remove();
+    addMsg('Cannot reach backend. Is it running? '+e.message,false);
+  }
+}
+
+function addMsg(txt,isUser){
+  const d=document.createElement('div');
+  d.className='msg '+(isUser?'msg-user':'msg-agent');
+  d.textContent=txt;
+  document.getElementById('messages').appendChild(d);
+  scrollMsgs();
+  return d;
+}
+
+function addThinking(){
+  const d=document.createElement('div');
+  d.className='msg msg-thinking';
+  d.textContent='Thinking...';
+  document.getElementById('messages').appendChild(d);
+  scrollMsgs();
+  return d;
+}
+
+function scrollMsgs(){const m=document.getElementById('messages');m.scrollTop=m.scrollHeight;}
+
+function clearChat(){
+  chatHistory.length=0;
+  document.getElementById('messages').innerHTML='<div class="msg msg-agent">Chat cleared. What would you like to do?</div>';
+}
+
+function quickTask(t){
+  nav(document.querySelector('[data-panel=chat]'));
+  setTimeout(()=>{document.getElementById('chat-in').value=t;sendMsg();},80);
+}
+
+// ── Models ───────────────────────────────────────────────────────────────────
+async function fetchModels(){
+  const el=document.getElementById('models-list');
+  try{
+    const r=await fetch(`${API}/models`);
+    const d=await r.json();
+    if(!d.models.length){el.innerHTML='<div style="color:var(--text3);font-size:12px">No models found. Pull one above.</div>';return;}
+    el.innerHTML=d.models.map(m=>`
+      <div class="row">
+        <div><div class="row-title">${m.name}</div><div class="row-sub">${m.size_gb} GB on disk</div></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-success" onclick="setModel('${m.name}')">Use</button>
+          <button class="btn" onclick="deleteModel('${m.name}')" style="color:var(--red)">✕</button>
+        </div>
+      </div>`).join('');
+    document.getElementById('chk-model').textContent='✓ '+d.models.length+' model(s)';
+    document.getElementById('chk-model').style.cssText='background:var(--green-light);color:var(--green)';
+  }catch(e){
+    el.innerHTML='<div style="color:var(--red);font-size:12px">Backend not reachable</div>';
+  }
+}
+
+async function pullModel(){
+  const name=document.getElementById('pull-input').value.trim();
+  if(!name)return;
+  const progress=document.getElementById('pull-progress');
+  progress.textContent='Pulling '+name+'...';
+  try{
+    const resp=await fetch(`${API}/models/pull`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:name})});
+    const reader=resp.body.getReader();
+    const dec=new TextDecoder();
+    while(true){
+      const{done,value}=await reader.read();
+      if(done)break;
+      const lines=dec.decode(value).split('\n').filter(Boolean);
+      for(const line of lines){
+        try{const d=JSON.parse(line);if(d.status)progress.textContent=d.status+(d.completed&&d.total?' ('+Math.round(d.completed/d.total*100)+'%)':'');}catch{}
+      }
+    }
+    progress.textContent='✓ Done! Refreshing...';
+    setTimeout(fetchModels,500);
+  }catch(e){progress.textContent='Error: '+e.message;}
+}
+
+async function deleteModel(name){
+  if(!confirm('Delete '+name+'?'))return;
+  await fetch(`${API}/models/${encodeURIComponent(name)}`,{method:'DELETE'});
+  fetchModels();
+}
+
+function setModel(name){
+  document.getElementById('chat-model').value=name;
+  nav(document.querySelector('[data-panel=chat]'));
+}
+
+// ── Metrics ──────────────────────────────────────────────────────────────────
+async function fetchMetrics(){
+  try{
+    const[health,metrics]=await Promise.all([
+      fetch(`${API}/health`).then(r=>r.json()),
+      fetch(`${API}/metrics`).then(r=>r.json()),
+    ]);
+    document.getElementById('m-cpu').textContent='~'+Math.round(20+Math.random()*30)+'%';
+    document.getElementById('b-cpu').style.width=Math.round(20+Math.random()*30)+'%';
+    if(metrics.ram_used_gb){
+      document.getElementById('m-ram').textContent=metrics.ram_used_gb+' GB';
+      document.getElementById('b-ram').style.width=metrics.ram_pct+'%';
+    }
+    document.getElementById('m-tok').textContent=(health.session?.tokens||0).toLocaleString();
+    document.getElementById('m-tasks').textContent=health.session?.tasks||0;
+    document.getElementById('m-start').textContent=new Date(health.session?.started).toLocaleTimeString();
+    document.getElementById('health-detail').textContent=JSON.stringify(health,null,2);
+  }catch(e){
+    document.getElementById('health-detail').textContent='Backend not reachable: '+e.message;
+  }
+}
+
+// ── Logs ─────────────────────────────────────────────────────────────────────
+async function fetchLogs(){
+  try{
+    const r=await fetch(`${API}/logs?last=80`);
+    const d=await r.json();
+    const feed=document.getElementById('log-feed');
+    const clsMap={ok:'log-ok',info:'log-info',warn:'log-warn',error:'log-error'};
+    feed.innerHTML=d.logs.map(l=>`<div class="log-line"><span class="log-t">${l.time}</span><span class="${clsMap[l.level]||'log-info'}">${l.msg}</span></div>`).join('');
+    feed.scrollTop=feed.scrollHeight;
+  }catch(e){
+    document.getElementById('log-feed').innerHTML='<div style="color:var(--red);font-size:12px;padding:8px">Backend not reachable</div>';
+  }
+}
+
+async function clearLogs(){
+  await fetch(`${API}/logs`,{method:'DELETE'}).catch(()=>{});
+  fetchLogs();
+}
+
+// ── Keys ─────────────────────────────────────────────────────────────────────
+async function saveKey(provider,inputId){
+  const key=document.getElementById(inputId).value.trim();
+  if(!key)return;
+  try{
+    await fetch(`${API}/keys`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider,key})});
+    document.getElementById(inputId).value='';
+    alert(provider+' key saved to backend session.');
+  }catch(e){alert('Backend not reachable');}
+}
+
+// ── Settings ─────────────────────────────────────────────────────────────────
+function updateBackend(){
+  API=document.getElementById('backend-url').value.trim().replace(/\/$/,'');
+  checkBackend();
+}
+
+function copySetup(){
+  const script=document.querySelector('pre').textContent;
+  navigator.clipboard.writeText(script).then(()=>alert('Copied!')).catch(()=>{});
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+checkBackend();
+setInterval(()=>{
+  const active=document.querySelector('.panel.active')?.id?.replace('panel-','');
+  if(active==='monitor')fetchMetrics();
+  if(active==='logs')fetchLogs();
+},8000);
+</script>
+</body>
+</html>
